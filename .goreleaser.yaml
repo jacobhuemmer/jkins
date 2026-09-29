@@ -27,17 +27,6 @@ release:
     owner: jacobhuemmer
     name: jkins
 
-homebrew_casks:
-  - name: jkins
-    directory: Casks
-    binaries: [jkins]
-    homepage: https://github.com/jacobhuemmer/jkins
-    description: Native Go Jenkins CLI with an encrypted local vault
-    skip_upload: true
-    repository:
-      owner: jacobhuemmer
-      name: homebrew-tap
-
 scoops:
   - name: jkins
     homepage: https://github.com/jacobhuemmer/jkins
