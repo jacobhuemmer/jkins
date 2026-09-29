@@ -1,0 +1,61 @@
+version: 2
+
+project_name: jkins
+
+builds:
+  - main: ./cmd/jkins
+    binary: jkins
+    env:
+      - CGO_ENABLED=0
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X github.com/jacobhuemmer/jkins/internal/cli.Version=v{{.Version}}
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: checksums.txt
+
+release:
+  github:
+    owner: jacobhuemmer
+    name: jkins
+
+homebrew_casks:
+  - name: jkins
+    directory: Casks
+    binaries: [jkins]
+    homepage: https://github.com/jacobhuemmer/jkins
+    description: Native Go Jenkins CLI with an encrypted local vault
+    skip_upload: true
+    repository:
+      owner: jacobhuemmer
+      name: homebrew-tap
+
+scoops:
+  - name: jkins
+    homepage: https://github.com/jacobhuemmer/jkins
+    description: Native Go Jenkins CLI with an encrypted local vault
+    license: MIT
+    skip_upload: true
+    repository:
+      owner: jacobhuemmer
+      name: scoop-bucket
+
+winget:
+  - name: jkins
+    publisher: Jacob Huemmer
+    package_identifier: JacobHuemmer.jkins
+    short_description: Native Go Jenkins CLI with an encrypted local vault
+    license: MIT
+    homepage: https://github.com/jacobhuemmer/jkins
+    skip_upload: true
+    repository:
+      owner: jacobhuemmer
+      name: winget-pkgs

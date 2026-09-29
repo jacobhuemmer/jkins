@@ -1,0 +1,6 @@
+/jkins
+/*.test
+/*.out
+/coverage.out
+/tmp/
+/dist/
