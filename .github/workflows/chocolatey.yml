@@ -4,10 +4,14 @@ on:
   pull_request:
     paths:
       - .github/workflows/chocolatey.yml
+      - .github/workflows/release.yml
       - scripts/render-chocolatey-package.py
       - README.md
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
   workflow_dispatch:
     inputs:
       tag:
@@ -22,7 +26,6 @@ jobs:
     runs-on: windows-2025
     env:
       GH_TOKEN: ${{ github.token }}
-      EVENT_TAG: ${{ github.event.release.tag_name }}
       INPUT_TAG: ${{ inputs.tag }}
       HAS_CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY != '' }}
     steps:
@@ -33,9 +36,7 @@ jobs:
       - name: Select release
         shell: pwsh
         run: |
-          $tag = if ($env:GITHUB_EVENT_NAME -eq 'release') {
-            $env:EVENT_TAG
-          } elseif ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+          $tag = if ($env:GITHUB_EVENT_NAME -ne 'pull_request') {
             $env:INPUT_TAG
           } else {
             gh release view --repo jacobhuemmer/jkins --json tagName --jq .tagName

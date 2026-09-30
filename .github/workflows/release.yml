@@ -35,3 +35,10 @@ jobs:
             dist/**/*.json
             dist/**/*.yaml
           if-no-files-found: error
+
+  chocolatey:
+    needs: release
+    uses: ./.github/workflows/chocolatey.yml
+    with:
+      tag: ${{ github.ref_name }}
+    secrets: inherit
