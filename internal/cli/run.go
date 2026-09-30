@@ -173,6 +173,9 @@ func readClient(deps Deps) (*jenkins.Client, error) {
 	if deps.ControllerURL != "" {
 		cfg.URL = deps.ControllerURL
 	}
+	if cfg.URL == "" {
+		return nil, fmt.Errorf("controller URL is not configured; set url in %s", paths.ConfigFile)
+	}
 	credential, present, err := (vault.Store{Dir: paths.StateDir}).Load()
 	if err != nil {
 		return nil, err

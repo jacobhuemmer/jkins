@@ -1,6 +1,6 @@
 # Jenkins CLI parity
 
-Snapshot: `jenkins help` on `jenkins.example.com` (Jenkins 2.462.3), 2026-09-29. It advertised 72 commands. Jenkins plugins can add or remove commands, so run `jkins commands` for the current controller's list and `jkins help COMMAND` for its current syntax.
+Snapshot: `jenkins help` on a Jenkins 2.462.3 controller, 2026-09-29. It advertised 72 commands. Jenkins plugins can add or remove commands, so run `jkins commands` for the current controller's list and `jkins help COMMAND` for its current syntax.
 
 `jkins` implements the Jenkins WebSocket CLI protocol in Go at `/cli/ws`: command name and arguments, UTF-8 encoding, stdin, stdout, stderr, and exit status. It uses the private `jkins` vault for HTTP Basic authentication during the WebSocket handshake. It does not invoke `jenkins-cli.jar` or 1Password. All commands below use that call path; there is no separate REST endpoint implementation for each command. The existing structured `job` and `build get|log|queue` operations still use Jenkins' HTTP API.
 
@@ -10,7 +10,7 @@ Source-level parity proof: the Java client sends command arguments, encoding, lo
 
 The Go transport and argument/stream behavior have local fake-controller tests. A checked box means a read-only command was also verified against the live controller. Open boxes are optional command-specific integration checks; they do not block source-based dispatch parity or mean the command is unavailable in Go. Live writes, builds, deployments, and administrator commands have not been run.
 
-Read-only differential check on 2026-09-29: the installed `jenkins` client and `jkins` returned byte-identical stdout, stderr, and exit codes for `help`, `help build`, `version`, and `list-jobs Team`. The installed launcher and `jkins` authenticate as different principals (`who-am-i` differs), so this is a transport check, not a complete permissions-sensitive comparison. Identifiers, job names, and permission output were not recorded in the comparison result.
+Read-only differential check on 2026-09-29: the installed `jenkins` client and `jkins` returned byte-identical stdout, stderr, and exit codes for `help`, `help build`, `version`, and `list-jobs` against the same folder. The installed launcher and `jkins` authenticate as different principals (`who-am-i` differs), so this is a transport check, not a complete permissions-sensitive comparison. Identifiers, job names, and permission output were not recorded in the comparison result.
 
 Verification rule for optional command-specific checks: run the official client and `jkins` against the same controller version, plugin set, credential, command arguments, and stdin. Compare stdout, stderr, exit status, and—when a command mutates Jenkins—the resulting server state. Use a disposable controller and fixtures for writes, build triggers, Groovy, plugin changes, credentials, and administrator actions. Transport edge cases below remain the priority because every command shares the same server dispatch.
 

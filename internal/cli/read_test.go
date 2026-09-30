@@ -38,6 +38,14 @@ func runRead(t *testing.T, deps cli.Deps, args ...string) (int, string, string) 
 	return code, out.String(), errOut.String()
 }
 
+func TestNetworkCommandRequiresControllerURL(t *testing.T) {
+	deps := readDepsWithToken(t, "", "unique-secret-token")
+	code, out, stderr := runRead(t, deps, "job", "list", "--filter", "Build")
+	if code == 0 || out != "" || !strings.Contains(stderr, "controller URL is not configured") {
+		t.Fatalf("missing controller: code=%d out=%q err=%q", code, out, stderr)
+	}
+}
+
 func TestJobListFiltersAndShowsFolderPaths(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/json" || r.URL.Query().Get("tree") == "" {

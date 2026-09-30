@@ -11,8 +11,6 @@ import (
 	"strings"
 )
 
-const DefaultURL = "https://jenkins.example.com/"
-
 type Config struct {
 	URL    string `json:"url"`
 	CAFile string `json:"ca_file,omitempty"`
@@ -41,7 +39,7 @@ func DefaultPaths() (Paths, error) {
 }
 
 func Load(path string) (Config, error) {
-	config := Config{URL: DefaultURL}
+	config := Config{}
 	data, err := os.ReadFile(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return config, nil

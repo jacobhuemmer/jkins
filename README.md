@@ -8,7 +8,7 @@ Go 1.26 or newer is required. Build a local binary with `make build` (equivalent
 
 Prebuilt releases can be installed with `brew install jacobhuemmer/tap/jkins` on macOS, or `scoop bucket add jacobhuemmer https://github.com/jacobhuemmer/scoop-bucket` followed by `scoop install jacobhuemmer/jkins` on Windows. The winget package identifier is `JacobHuemmer.jkins`; its community listing becomes installable after the manifest pull request is accepted. A Chocolatey package is attached to each GitHub release. Download the `.nupkg` from the [releases page](https://github.com/jacobhuemmer/jkins/releases) and run `choco install jkins --source PATH_TO_DOWNLOAD_DIRECTORY --version 2.462.3` for the first release. The package will also be available through `choco install jkins` after it is published and approved on Chocolatey Community. Run `jkins --version` for the client release version. `jkins version` asks the controller for its Jenkins version. The first `jkins` release uses `v2.462.3` to identify the Jenkins version used for protocol and command parity review; future client releases can advance independently.
 
-The optional configuration file is `jkins/config.json` under Go's platform user config directory. With no file, the controller is `https://jenkins.example.com/`. For a custom CA bundle, use an absolute path to a PEM certificate file:
+Configure the controller in `jkins/config.json` under Go's platform user config directory before running network commands. For a custom CA bundle, use an absolute path to a PEM certificate file:
 
 ```json
 {
@@ -44,9 +44,9 @@ Native Jenkins CLI commands are available directly in the same Go binary:
 ```sh
 ./jkins --skip-tls-verify commands
 ./jkins --skip-tls-verify help build
-./jkins --skip-tls-verify list-jobs 'Team'
-./jkins --skip-tls-verify console 'Team/Job' lastBuild -n 200
-./jkins --skip-tls-verify build 'Team/Job' -f -v
+./jkins list-jobs 'Team'
+./jkins console 'Team/Job' lastBuild -n 200
+./jkins build 'Team/Job' -f -v
 ```
 
 `commands` asks the controller for its current command list. `help COMMAND` asks for current syntax. Direct commands preserve stdin, stdout, stderr, and Jenkins exit codes. They run with Jenkins CLI semantics: **`jkins build JOB` queues immediately**, while `jkins build queue JOB` remains a preview until `--execute`. Local `jkins help` shows this CLI's help; `jkins --jenkins-command help` forces the controller's `help` command. The same flag resolves any command-name collision. The direct command path emits the controller's raw output, which may contain secrets from Jenkins or plugins.
@@ -66,4 +66,4 @@ Start the stdio server with `./jkins mcp serve`. Configure an MCP client to laun
 
 MCP uses the same credential vault and controller configuration as the CLI. Set up credentials with terminal-only `auth login` before authenticated reads or a queue submission. A queue preview needs no credential. Tool results use the CLI's safe JSON or text results; protocol frames use stdout and diagnostics use stderr. MCP exposes only the structured subset above, not arbitrary Jenkins CLI commands.
 
-Automated tests use only a fake local controller. Live read-only probes succeeded for the structured job list and native `help`, `version`, `who-am-i`, and `list-jobs` commands using the explicit TLS override and a locally stored credential. No live build was submitted; the controller certificate still needs renewal.
+Automated tests use only a fake local controller. Read-only probes verified the structured job list and native `help`, `version`, `who-am-i`, and `list-jobs` commands. No live build was submitted.
