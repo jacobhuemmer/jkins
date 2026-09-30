@@ -1,0 +1,80 @@
+name: Chocolatey package
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/chocolatey.yml
+      - scripts/render-chocolatey-package.py
+      - README.md
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing jkins release tag
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: windows-2025
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EVENT_TAG: ${{ github.event.release.tag_name }}
+      INPUT_TAG: ${{ inputs.tag }}
+      HAS_CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Select release
+        shell: pwsh
+        run: |
+          $tag = if ($env:GITHUB_EVENT_NAME -eq 'release') {
+            $env:EVENT_TAG
+          } elseif ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch') {
+            $env:INPUT_TAG
+          } else {
+            gh release view --repo jacobhuemmer/jkins --json tagName --jq .tagName
+          }
+          if ($tag -notmatch '^v\d+\.\d+\.\d+$') { throw "Expected a vMAJOR.MINOR.PATCH release tag" }
+          "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
+          "RELEASE_VERSION=$($tag.Substring(1))" >> $env:GITHUB_ENV
+      - name: Download published Windows archives
+        shell: pwsh
+        run: |
+          gh release download $env:RELEASE_TAG --repo jacobhuemmer/jkins --pattern 'jkins_*_windows_*.zip' --dir dist
+      - name: Render and pack Chocolatey package
+        shell: pwsh
+        run: |
+          python scripts/render-chocolatey-package.py $env:RELEASE_VERSION dist
+          Push-Location dist/chocolatey
+          choco pack jkins.nuspec --outputdirectory ..
+          Pop-Location
+      - name: Test installation and executable
+        shell: pwsh
+        run: |
+          choco install jkins --source "$pwd/dist" --version $env:RELEASE_VERSION --yes --no-progress
+          $actual = & "$env:ChocolateyInstall\bin\jkins.exe" --version
+          if ($actual -ne "jkins v$env:RELEASE_VERSION") { throw "Unexpected jkins version: $actual" }
+          choco uninstall jkins --yes --no-progress
+      - name: Attach package to GitHub release
+        if: github.event_name != 'pull_request'
+        shell: pwsh
+        run: |
+          gh release upload $env:RELEASE_TAG "dist/jkins.$env:RELEASE_VERSION.nupkg" --repo jacobhuemmer/jkins --clobber
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chocolatey-package
+          path: dist/*.nupkg
+          if-no-files-found: error
+      - name: Publish to Chocolatey Community
+        if: github.event_name != 'pull_request' && env.HAS_CHOCOLATEY_API_KEY == 'true'
+        shell: pwsh
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        run: |
+          choco push "dist/jkins.$env:RELEASE_VERSION.nupkg" --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
