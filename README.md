@@ -67,3 +67,16 @@ Start the stdio server with `./jkins mcp serve`. Configure an MCP client to laun
 MCP uses the same credential vault and controller configuration as the CLI. Set up credentials with terminal-only `auth login` before authenticated reads or a queue submission. A queue preview needs no credential. Tool results use the CLI's safe JSON or text results; protocol frames use stdout and diagnostics use stderr. MCP exposes only the structured subset above, not arbitrary Jenkins CLI commands.
 
 Automated tests use only a fake local controller. Read-only probes verified the structured job list and native `help`, `version`, `who-am-i`, and `list-jobs` commands. No live build was submitted.
+
+## Agent skills
+
+The repository includes focused, self-contained skills under `skills/`:
+
+| Skill | Use |
+| --- | --- |
+| [`jkins-setup`](skills/jkins-setup/SKILL.md) | Configure the controller, TLS, and credential vault. |
+| [`jkins-read`](skills/jkins-read/SKILL.md) | Discover jobs and inspect builds or logs. |
+| [`jkins-build`](skills/jkins-build/SKILL.md) | Preview, trigger, and follow builds. |
+| [`jkins-command`](skills/jkins-command/SKILL.md) | Discover and run other controller or plugin CLI commands. |
+
+Copy each skill directory into an agent's skill root, or symlink it from a dotfiles repository. For example, Codex can discover them under `.agents/skills/<skill-name>/SKILL.md` and Claude under `.claude/skills/<skill-name>/SKILL.md`. These skills require the local `jkins` binary and controller configuration described above. No `jkins skill` command is needed.
